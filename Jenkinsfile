@@ -8,6 +8,7 @@ pipeline {
 
   environment {
     TARGET_BRANCH = "${params.BRANCH ?: 'DEV'}"
+    SONAR_SERVER  = 'Sonar' // Nombre que coincide con tu configuración Jenkins
   }
 
   stages {
@@ -40,17 +41,22 @@ pipeline {
     }
 
     stage('SonarQube Analysis') {
-      when { expression { return env.TARGET_BRANCH in ['DEV','QA','PROD'] } }
       steps {
-        withSonarQubeEnv('sonarqube') {
+        echo "Ejecutando análisis en SonarQube (${env.SONAR_SERVER})"
+        withSonarQubeEnv(env.SONAR_SERVER) {
+          bat 'sonar-scanner -v'
           bat 'sonar-scanner'
         }
       }
     }
 
     stage('Artefacto (solo QA/PROD)') {
-      when { anyOf { environment name: 'TARGET_BRANCH', value: 'QA'
-                     environment name: 'TARGET_BRANCH', value: 'PROD' } }
+      when {
+        anyOf {
+          environment name: 'TARGET_BRANCH', value: 'QA'
+          environment name: 'TARGET_BRANCH', value: 'PROD'
+        }
+      }
       steps {
         bat 'npm run build'
       }
