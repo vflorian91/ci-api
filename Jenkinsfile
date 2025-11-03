@@ -8,10 +8,11 @@ pipeline {
 
   environment {
     TARGET_BRANCH = "${params.BRANCH ?: 'DEV'}"
-    SONAR_SERVER  = 'Sonar' // Nombre que coincide con tu configuración Jenkins
+    SONAR_SERVER  = 'Sonar'   // coincide con tu configuración en Manage Jenkins → System
   }
 
   stages {
+
     stage('Checkout') {
       steps {
         echo "Haciendo checkout de la rama: ${env.TARGET_BRANCH}"
@@ -42,10 +43,19 @@ pipeline {
 
     stage('SonarQube Analysis') {
       steps {
+        // Resuelve la ruta del Scanner definido en Tools (nombre exacto: SonarScanner7.3)
+        script {
+          scannerHome = tool name: 'SonarScanner7.3',
+                              type: 'hudson.plugins.sonar.SonarRunnerInstallation'
+          echo "Usando SonarScanner en: ${scannerHome}"
+        }
+
         echo "Ejecutando análisis en SonarQube (${env.SONAR_SERVER})"
         withSonarQubeEnv(env.SONAR_SERVER) {
-          bat 'sonar-scanner -v'
-          bat 'sonar-scanner'
+          // Mostrar versión (útil para diagnosticar)
+          bat "\"%scannerHome%\\bin\\sonar-scanner.bat\" -v"
+          // Ejecutar análisis (lee sonar-project.properties en la raíz del repo)
+          bat "\"%scannerHome%\\bin\\sonar-scanner.bat\""
         }
       }
     }
@@ -64,14 +74,8 @@ pipeline {
   }
 
   post {
-    always {
-      echo "Branch usada: ${env.TARGET_BRANCH}"
-    }
-    failure {
-      echo '❌ Pipeline FAILED'
-    }
-    success {
-      echo '✅ Pipeline OK'
-    }
+    always { echo "Branch usada: ${env.TARGET_BRANCH}" }
+    failure { echo '❌ Pipeline FAILED' }
+    success { echo '✅ Pipeline OK' }
   }
 }
