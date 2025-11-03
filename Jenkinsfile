@@ -8,11 +8,10 @@ pipeline {
 
   environment {
     TARGET_BRANCH = "${params.BRANCH ?: 'DEV'}"
-    SONAR_SERVER  = 'Sonar'   // coincide con tu configuración en Manage Jenkins → System
+    SONAR_SERVER  = 'Sonar'   // nombre en Manage Jenkins → System
   }
 
   stages {
-
     stage('Checkout') {
       steps {
         echo "Haciendo checkout de la rama: ${env.TARGET_BRANCH}"
@@ -30,32 +29,27 @@ pipeline {
     }
 
     stage('Install') {
-      steps {
-        bat 'npm ci'
-      }
+      steps { bat 'npm ci' }
     }
 
     stage('Smoke (placeholder)') {
-      steps {
-        bat 'npm run test:smoke || exit 0'
-      }
+      steps { bat 'npm run test:smoke || exit 0' }
     }
 
     stage('SonarQube Analysis') {
       steps {
-        // Resuelve la ruta del Scanner definido en Tools (nombre exacto: SonarScanner7.3)
         script {
-          scannerHome = tool name: 'SonarScanner7.3',
-                              type: 'hudson.plugins.sonar.SonarRunnerInstallation'
+          // Resuelve el scanner desde Tools (tu nombre es SonarScanner7.3)
+          def scannerHome = tool(name: 'SonarScanner7.3',
+                                 type: 'hudson.plugins.sonar.SonarRunnerInstallation')
           echo "Usando SonarScanner en: ${scannerHome}"
-        }
 
-        echo "Ejecutando análisis en SonarQube (${env.SONAR_SERVER})"
-        withSonarQubeEnv(env.SONAR_SERVER) {
-          // Mostrar versión (útil para diagnosticar)
-          bat "\"%scannerHome%\\bin\\sonar-scanner.bat\" -v"
-          // Ejecutar análisis (lee sonar-project.properties en la raíz del repo)
-          bat "\"%scannerHome%\\bin\\sonar-scanner.bat\""
+          echo "Ejecutando análisis en SonarQube (${env.SONAR_SERVER})"
+          withSonarQubeEnv(env.SONAR_SERVER) {
+            // IMPORTANTE: usar ${scannerHome}, no %scannerHome%
+            bat "\"${scannerHome}\\bin\\sonar-scanner.bat\" -v"
+            bat "\"${scannerHome}\\bin\\sonar-scanner.bat\""
+          }
         }
       }
     }
@@ -67,9 +61,7 @@ pipeline {
           environment name: 'TARGET_BRANCH', value: 'PROD'
         }
       }
-      steps {
-        bat 'npm run build'
-      }
+      steps { bat 'npm run build' }
     }
   }
 
