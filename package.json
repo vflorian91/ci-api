@@ -1,12 +1,13 @@
 {
   "name": "ci-api",
   "version": "1.0.0",
-  "description": "",
+  "description": "API demo para practicar CI/CD con Jenkins y SonarQube",
   "main": "src/server.js",
   "scripts": {
     "dev": "nodemon src/server.js",
     "start": "node src/server.js",
-    "test": "node -e \"console.log('placeholder ok')\""
+    "test": "node -e \"console.log('placeholder ok')\"",
+    "test:smoke": "node -e \"console.log('smoke ok')\""
   },
   "keywords": [],
   "author": "",
